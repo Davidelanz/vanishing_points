@@ -1,11 +1,13 @@
+import multiprocessing
+
 import numpy as np
 import numpy.matlib
-from numpy import linalg as la
 import sklearn.cluster as cluster
-import probability_functions as prob
 from joblib import Parallel, delayed
-import multiprocessing
+from numpy import linalg as la
+
 import coordinate_conversion as coconv
+import probability_functions as prob
 
 pi = np.pi
 
@@ -41,18 +43,20 @@ def line_rating_knn(lp, k1=10, k2=3, sigma=1):
     k2 = np.minimum(k2, N)
 
     num_cores = multiprocessing.cpu_count()
-    ldist = Parallel(n_jobs=num_cores)(delayed(calc_ldist_parfun)(i, lp) for i in range(N))
+    ldist = Parallel(n_jobs=num_cores)(
+        delayed(calc_ldist_parfun)(i, lp) for i in range(N))
     ldist = np.stack(ldist)
 
     ldist_argsorted = np.argsort(ldist, axis=1)
-    ldist_argbest = ldist_argsorted[:,0:k1]
+    ldist_argbest = ldist_argsorted[:, 0:k1]
 
     for li in range(N):
-        lp1 = lp[li,:]
+        lp1 = lp[li, :]
 
         cosphi = np.zeros(k1)
         for ki in range(k1):
-            cosphi[ki] = lines_points_cosangle(lp[li, :], lp[ldist_argbest[li, ki], :], f=9)
+            cosphi[ki] = lines_points_cosangle(
+                lp[li, :], lp[ldist_argbest[li, ki], :], f=9)
 
         cosphi_argsorted = np.argsort(cosphi)
         cosphi_argsorted = cosphi_argsorted[::-1]
@@ -60,7 +64,7 @@ def line_rating_knn(lp, k1=10, k2=3, sigma=1):
 
         lsim_temp = np.zeros(k2)
         for ki in range(k2):
-            lj = ldist_argbest[li,cosphi_argbest[ki]]
+            lj = ldist_argbest[li, cosphi_argbest[ki]]
             lp2 = lp[lj, :]
             prox = lines_proximity(lp1, lp2, sigma)
             lsim_temp[ki] = prox * cosphi[cosphi_argbest[ki]]
@@ -89,7 +93,8 @@ def calc_lsim(lp, sigma=0.1):
     num_cores = multiprocessing.cpu_count()
     N = lp.shape[0]
 
-    lsim = Parallel(n_jobs=num_cores)(delayed(calc_lsim_parfun)(i, lp, sigma) for i in range(N))
+    lsim = Parallel(n_jobs=num_cores)(
+        delayed(calc_lsim_parfun)(i, lp, sigma) for i in range(N))
     lsim = np.stack(lsim)
 
     for i in range(N):
@@ -129,20 +134,22 @@ def find_initial_vps(sphere_image, cnn_response, num_max):
 
     for ra in range(rA):
         for rb in range(rB):
-            if maxima[ra,rb] == 1:
-                sphere_slice = sphere[ra*sA/rA:(ra+1)*sA/rA, rb*sB/rB:(rb+1)*sB/rB]
+            if maxima[ra, rb] == 1:
+                sphere_slice = sphere[ra*sA /
+                                      rA:(ra+1)*sA/rA, rb*sB/rB:(rb+1)*sB/rB]
 
                 max_response = np.max(sphere_slice)
                 sphere_slice_flat = sphere_slice.flatten()
                 sphere_slice_flat[sphere_slice_flat < max_response] = 0
-                maxed_idx = np.where(sphere_slice_flat>0)[0]
+                maxed_idx = np.where(sphere_slice_flat > 0)[0]
                 unraveled_indices = []
 
                 if maxed_idx.shape[0] == 0:
                     continue
 
                 for i in range(maxed_idx.shape[0]):
-                    unraveled = np.unravel_index(maxed_idx[i], sphere_slice.shape)
+                    unraveled = np.unravel_index(
+                        maxed_idx[i], sphere_slice.shape)
                     unraveled_indices.append(unraveled)
 
                 average_index = np.zeros(2)
@@ -165,27 +172,30 @@ def find_initial_vps(sphere_image, cnn_response, num_max):
     return np.vstack(vps)
 
 
-def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=None,
-                             init_vp=None, do_merge=True, do_split=True, do_iterations=True,
-                             distance_measure="angle", use_weights=True, wbias=1, num_init_vp=25, split_merge_freq=10,
-                             merge_thresh=1e-3, outlier_thresh=1.96**2, final_convergence=5e-3,
-                             s_thresh=1e-200, num_min_lines=3):
+def expectation_maximisation(
+        ln, lp, cnn_response, num_iter=100,
+        sphere_image=None,
+        init_vp=None, do_merge=True, do_split=True, do_iterations=True,
+        distance_measure="angle", use_weights=True, wbias=1, num_init_vp=25,
+        split_merge_freq=10,
+        merge_thresh=1e-3, outlier_thresh=1.96**2, final_convergence=5e-3,
+        s_thresh=1e-200, num_min_lines=3):
 
-    N = l.shape[0]
+    N = ln.shape[0]
     print "Number of line segments: ", N
 
     if use_weights:
         lsim = calc_lsim(lp, sigma=1)
     else:
-        lsim = np.zeros((l.shape[0], l.shape[0]))
+        lsim = np.zeros((ln.shape[0], ln.shape[0]))
 
-    lv = np.zeros((l.shape[0], 2))
-    lm = np.zeros((l.shape[0], 2))
+    lv = np.zeros((ln.shape[0], 2))
+    lm = np.zeros((ln.shape[0], 2))
 
-    for i in range(l.shape[0]):
-        l[i,:] /= np.linalg.norm(l[i,:])
-        lv[i,:] = lp[i,0:2] - lp[i,2:4]
-        lm[i,:] = (lp[i,0:2] + lp[i,2:4])*0.5
+    for i in range(ln.shape[0]):
+        ln[i, :] /= np.linalg.norm(ln[i, :])
+        lv[i, :] = lp[i, 0:2] - lp[i, 2:4]
+        lm[i, :] = (lp[i, 0:2] + lp[i, 2:4])*0.5
 
     merge_thresh_final = merge_thresh*10
     merge_freq = split_merge_freq
@@ -212,7 +222,7 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
     if not (init_vp is None):
         v0 = init_vp.copy()
         for m in range(v0.shape[0]):
-            v0[m,:] /= np.linalg.norm(v0[m,:])
+            v0[m, :] /= np.linalg.norm(v0[m, :])
 
     langles = lines_angles(lp)
 
@@ -220,11 +230,12 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
 
     outlier_stdd = 1
 
-    llen = np.ones(l.shape[0])
+    llen = np.ones(ln.shape[0])
 
-    for li in range(l.shape[0]):
-        l[li,:] /= np.linalg.norm(l[li,:], ord=2)
-        llen[li] = np.linalg.norm(np.array([lp[li,0]-lp[li,2], lp[li,1]-lp[li,3]]), ord=2)
+    for li in range(ln.shape[0]):
+        ln[li, :] /= np.linalg.norm(ln[li, :], ord=2)
+        llen[li] = np.linalg.norm(
+            np.array([lp[li, 0]-lp[li, 2], lp[li, 1]-lp[li, 3]]), ord=2)
 
     if use_weights:
         lscore = line_rating_knn(lp, k2=4)
@@ -240,12 +251,14 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
 
     v = np.zeros((num_iter+1, v0.shape[0], v0.shape[1]))
 
-    v[0,:,:] = v0.copy()
+    v[0, :, :] = v0.copy()
 
-    p = prob.calc_probabilities(0, pdfpar, v, l, lp, s, llen, distance_measure)
+    p = prob.calc_probabilities(0, pdfpar, v, ln, lp, s, llen,
+                                distance_measure)
     w = weight_matrix(p.vl, lweight, lsim, bias=wbias)
-    counts, counts_weighted, vp_assoc = calc_vp_line_counts(v[0,:,:], l, lp, s, w, lweight, distance_measure,
-                                                            thresh=outlier_thresh)
+    counts, counts_weighted, vp_assoc = calc_vp_line_counts(
+        v[0, :, :], ln, lp, s, w, lweight, distance_measure,
+        thresh=outlier_thresh)
 
     v = np.delete(v, np.where(counts < 3)[0], axis=1)
     s = np.delete(s, np.where(counts < 3)[0], axis=0)
@@ -259,18 +272,23 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
             print "No VPs left!"
             return result
 
-        if np.mod(i, split_freq) == 0 and i > 0 and i < split_merge_it and do_split:
+        if np.mod(i, split_freq) == 0 and i > 0 \
+                and i < split_merge_it and do_split:
             for it in range(splits):
-                p = prob.calc_probabilities(i, pdfpar, v, l, lp, s, llen, distance_measure)
+                p = prob.calc_probabilities(
+                    i, pdfpar, v, ln, lp, s, llen, distance_measure)
                 w = weight_matrix(p.vl, lweight, lsim, bias=wbias)
-                split = split_best_vp(i, v, s, linePoints=lp, lines=l, weightMatrix=w, lineWeights=lweight,
-                                      lineAngles=langles, min_diff=merge_thresh)
+                split = split_best_vp(
+                    i, v, s, linePoints=lp, lines=ln,
+                    weightMatrix=w, lineWeights=lweight,
+                    lineAngles=langles, min_diff=merge_thresh)
                 v = split['v'].copy()
                 s = split['s'].copy()
 
         M = v.shape[1]
 
-        p = prob.calc_probabilities(i, pdfpar, v, l, lp, s, llen, distance_measure)
+        p = prob.calc_probabilities(
+            i, pdfpar, v, ln, lp, s, llen, distance_measure)
 
         max_err = 0
         max_id = 0
@@ -286,8 +304,8 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
             if not do_iterations:
                 break
 
-            wtemp = w[m,:]
-            ltemp = l
+            wtemp = w[m, :]
+            ltemp = ln
 
             newVP = calc_new_vanishing_point(ltemp, wtemp)
 
@@ -298,9 +316,10 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
                 v[i + 1, m, :] = newVP
 
             try:
-                p_vl_sum = np.sum(p.vl[m,:])
+                p_vl_sum = np.sum(p.vl[m, :])
 
-                s_log = np.log(np.sum(p.lvsq[:,m] * p.vl[m,:])) - np.log(p_vl_sum)
+                s_log = np.log(
+                    np.sum(p.lvsq[:, m] * p.vl[m, :])) - np.log(p_vl_sum)
                 s[m] = np.exp(s_log)
 
                 s[m] = np.minimum(s[m], max_stdd)
@@ -309,7 +328,8 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
                 if np.isnan(s[m]):
                     to_be_removed.append(m)
                 else:
-                    err = np.arccos(np.minimum(np.abs(np.dot(v[i,m,:], v[i+1,m,:])), 1.0))
+                    err = np.arccos(np.minimum(
+                        np.abs(np.dot(v[i, m, :], v[i+1, m, :])), 1.0))
                     max_err = np.maximum(max_err, err)
                     max_id = m if max_err == err else max_id
 
@@ -322,26 +342,30 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
                 continue
 
         if not do_iterations:
-            v[i + 1, :, :] = v[i , :, :].copy()
+            v[i + 1, :, :] = v[i, :, :].copy()
 
         print "%03d - max. VP change: %.4f - VPs: %d" % (i, max_err, M)
 
         to_be_removed = np.array(to_be_removed)
         v = np.delete(v, to_be_removed, axis=1)
         s = np.delete(s, to_be_removed, axis=0)
-        p = prob.calc_probabilities(i, pdfpar, v, l, lp, s, llen, distance_measure)
+        p = prob.calc_probabilities(
+            i, pdfpar, v, ln, lp, s, llen, distance_measure)
         M = v.shape[1]
 
         if max_err < final_convergence or i == num_iter-1 or not do_iterations:
             print "reached convergence"
 
             if do_merge:
-                merged = merge_vps(i + 1, v, s, l, merge_thresh_final, lweight, lsim, wbias, pdfpar, lp, llen,
-                                   distance_measure, outlier_stdd=outlier_stdd)
+                merged = merge_vps(
+                    i + 1, v, s, ln, merge_thresh_final, lweight,
+                    lsim, wbias, pdfpar, lp, llen,
+                    distance_measure, outlier_stdd=outlier_stdd)
                 v = merged['v']
                 s = merged['s']
 
-            p = prob.calc_probabilities(i, pdfpar, v, l, lp, s, llen, distance_measure)
+            p = prob.calc_probabilities(
+                i, pdfpar, v, ln, lp, s, llen, distance_measure)
 
             w = weight_matrix(p.vl, lweight_temp, lsim, bias=wbias)
 
@@ -357,8 +381,8 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
 
                 w[m, assoc == m] /= np.max(w[m, assoc == m])
 
-                wtemp = w[m, assoc==m]
-                ltemp = l[assoc==m,:]
+                wtemp = w[m, assoc == m]
+                ltemp = ln[assoc == m, :]
 
                 newVP = calc_new_vanishing_point(ltemp, wtemp)
 
@@ -371,7 +395,8 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
                 try:
                     p_vl_sum = np.sum(p.vl[m, :])
 
-                    s_log = np.log(np.sum(p.lvsq[:, m] * p.vl[m, :])) - np.log(p_vl_sum)
+                    s_log = np.log(
+                        np.sum(p.lvsq[:, m] * p.vl[m, :])) - np.log(p_vl_sum)
                     s[m] = np.exp(s_log)
 
                     s[m] = np.minimum(s[m], max_stdd)
@@ -380,7 +405,8 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
                         to_be_removed.append(m)
                     else:
 
-                        err = np.arccos(np.minimum(np.abs(np.dot(v[i, m, :], v[i + 1, m, :])), 1.0))
+                        err = np.arccos(np.minimum(
+                            np.abs(np.dot(v[i, m, :], v[i + 1, m, :])), 1.0))
                         max_err = np.maximum(max_err, err)
                         max_id = m if max_err == err else max_id
 
@@ -395,7 +421,8 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
             v = np.delete(v, to_be_removed, axis=1)
             s = np.delete(s, to_be_removed, axis=0)
 
-            p = prob.calc_probabilities(i, pdfpar, v, l, lp, s, llen, distance_measure)
+            p = prob.calc_probabilities(
+                i, pdfpar, v, ln, lp, s, llen, distance_measure)
 
             decision_metric = weight_matrix(p.vl, lweight, lsim, bias=wbias)
 
@@ -409,14 +436,16 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
 
             print "Number of VPs: ", good_vp.size
 
-            v = v[:,good_vp,:]
+            v = v[:, good_vp, :]
             s = s[good_vp]
 
-            p = prob.calc_probabilities(i+1, pdfpar, v, l, lp, s, llen, distance_measure)
+            p = prob.calc_probabilities(
+                i+1, pdfpar, v, ln, lp, s, llen, distance_measure)
 
             decision_metric = weight_matrix(p.vl, lweight, lsim, bias=wbias)
-            counts, counts_weighted, vp_assoc = calc_vp_line_counts(v[i+1,:,:], l, lp, s, decision_metric, lweight,
-                                                                    distance_measure, thresh=outlier_thresh)
+            counts, counts_weighted, vp_assoc = calc_vp_line_counts(
+                v[i+1, :, :], ln, lp, s, decision_metric, lweight,
+                distance_measure, thresh=outlier_thresh)
 
             M = v.shape[1]
 
@@ -427,22 +456,29 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
                     s = np.delete(s, vidx)
                     M = v.shape[1]
 
-                    p = prob.calc_probabilities(i + 1, pdfpar, v, l, lp, s, llen, distance_measure)
-                    decision_metric = weight_matrix(p.vl, lweight, lsim, bias=wbias)
-                    counts, counts_weighted, vp_assoc = calc_vp_line_counts(v[i + 1, :, :], l, lp, s, decision_metric,
-                                                                            lweight, distance_measure,
-                                                                            thresh=outlier_thresh, vp_assoc=None)
+                    p = prob.calc_probabilities(
+                        i + 1, pdfpar, v, ln, lp, s, llen, distance_measure)
+                    decision_metric = weight_matrix(
+                        p.vl, lweight, lsim, bias=wbias)
+                    counts, counts_weighted, vp_assoc = calc_vp_line_counts(
+                        v[i + 1, :, :], ln, lp, s, decision_metric,
+                        lweight, distance_measure,
+                        thresh=outlier_thresh, vp_assoc=None)
 
                 else:
                     vidx += 1
 
             vp = v[i + 1, :, :]
 
-            return {'vp_assoc':vp_assoc,'vp':vp, 'counts':counts, 'counts_weighted':counts_weighted, 'count_id':None,
-                    'decision_metric':decision_metric, 'iterations':i, 'distribution':p, 'sigma':s }
+            return {'vp_assoc': vp_assoc, 'vp': vp, 'counts': counts,
+                    'counts_weighted': counts_weighted, 'count_id': None,
+                    'decision_metric': decision_metric, 'iterations': i,
+                    'distribution': p, 'sigma': s}
 
-        if np.mod(i,merge_freq) == 0 and i > 0 and i <= split_merge_it+merge_freq and do_merge:
-            merged = merge_vps(i+1, v, s, l, merge_thresh, lweight, lsim, wbias, pdfpar, lp, llen, distance_measure,
+        if np.mod(i, merge_freq) == 0 and i > 0 and \
+                i <= split_merge_it+merge_freq and do_merge:
+            merged = merge_vps(i+1, v, s, ln, merge_thresh, lweight, lsim,
+                               wbias, pdfpar, lp, llen, distance_measure,
                                outlier_stdd=outlier_stdd)
             v = merged['v']
             s = merged['s']
@@ -450,7 +486,7 @@ def expectation_maximisation(l, lp, cnn_response, num_iter=100, sphere_image=Non
     return result
 
 
-def calc_new_vanishing_point(l, w):
+def calc_new_vanishing_point(ln, w):
 
     try:
         if np.size(w) == 0:
@@ -460,7 +496,7 @@ def calc_new_vanishing_point(l, w):
             return None
 
         W = np.diag(w / np.max(w))
-        A = l
+        A = ln
         Mat = np.dot(W, A)
 
         U, S, V = la.svd(Mat)
@@ -479,9 +515,10 @@ def calc_new_vanishing_point(l, w):
     return vp
 
 
-def calc_vp_line_counts(vp, l, lp, s, decision_metric, lweights, distance_measure, thresh=2.57, vp_assoc=None):
+def calc_vp_line_counts(vp, ln, lp, s, decision_metric, lweights,
+                        distance_measure, thresh=2.57, vp_assoc=None):
 
-    N = l.shape[0]
+    N = ln.shape[0]
     M = vp.shape[0]
     if vp_assoc is None:
         vp_assoc = np.argmax(decision_metric, axis=0)
@@ -493,11 +530,11 @@ def calc_vp_line_counts(vp, l, lp, s, decision_metric, lweights, distance_measur
         m = vp_assoc[n]
         if m > -1:
             if distance_measure == "dotprod":
-                dist = np.abs(np.dot(vp[m], l[n, :]))
+                dist = np.abs(np.dot(vp[m], ln[n, :]))
             elif distance_measure == "angle":
-                dist = prob.calc_lvsq_single(vp[m], l[n, :], lp[n, :])
+                dist = prob.calc_lvsq_single(vp[m], ln[n, :], lp[n, :])
             elif distance_measure == "area":
-                dist = prob.calc_lvsq_area_single(vp[m], l[n, :], lp[n, :])
+                dist = prob.calc_lvsq_area_single(vp[m], ln[n, :], lp[n, :])
             else:
                 assert False
 
@@ -519,12 +556,14 @@ def weight_matrix(p_vl, lweight, lsim, bias=0.001):
         w_ = p_vl[m, :] * lweight
 
         for k in range(w.shape[1]):
-            w[m,k] = ( w_[k] + bias * lweight[k] * np.dot(w_, lsim[:, k]) ) / ( 1 + bias * lweight[k] * np.sum(lsim[:, k]) )
+            w[m, k] = (w_[k] + bias * lweight[k] * np.dot(w_, lsim[:, k])
+                       ) / (1 + bias * lweight[k] * np.sum(lsim[:, k]))
 
     return w
 
 
-def split_best_vp(i, v, s, linePoints, lines, weightMatrix, lineWeights, lineAngles, numClusters=2, min_diff=0.0001):
+def split_best_vp(i, v, s, linePoints, lines, weightMatrix, lineWeights,
+                  lineAngles, numClusters=2, min_diff=0.0001):
 
     M = v.shape[1]
     N = lines.shape[0]
@@ -535,13 +574,14 @@ def split_best_vp(i, v, s, linePoints, lines, weightMatrix, lineWeights, lineAng
     weightMatrixGreedy = np.zeros(weightMatrix.shape)
     weightIndices = weightMatrix.argmax(axis=0)
     for li in range(N):
-        weightMatrixGreedy[weightIndices[li],li] = weightMatrix[weightIndices[li],li]
+        weightMatrixGreedy[weightIndices[li],
+                           li] = weightMatrix[weightIndices[li], li]
     weightMatrixGreedy /= weightMatrix.max()
 
     for m in range(M):
 
-        mean_phi[m] = np.mean(lineAngles[weightMatrixGreedy[m,:]>0])
-        stdd_phi[m] = np.std(lineAngles[weightMatrixGreedy[m,:]>0])
+        mean_phi[m] = np.mean(lineAngles[weightMatrixGreedy[m, :] > 0])
+        stdd_phi[m] = np.std(lineAngles[weightMatrixGreedy[m, :] > 0])
 
     worstVPs = np.argsort(stdd_phi)
     worstVPs = worstVPs[::-1]
@@ -551,13 +591,14 @@ def split_best_vp(i, v, s, linePoints, lines, weightMatrix, lineWeights, lineAng
         vpAssoc = np.argmax(weightMatrix, axis=0)
         assocLines = np.where(vpAssoc == worstVPs[m])[0]
         lp = linePoints[assocLines]
-        l = lines[assocLines]
+        ln = lines[assocLines]
         Nworst = lp.shape[0]
 
         vp = v[i, m, :].copy()
         vp /= vp[2]
 
-        if  Nworst > numClusters*4 and ( ( vp[0] > -1 and vp[1] > -1 and vp[0] < 1 and vp[1] < 1 ) ):
+        if Nworst > numClusters*4 \
+                and ((vp[0] > -1 and vp[1] > -1 and vp[0] < 1 and vp[1] < 1)):
             worstVP = worstVPs[m]
             break
 
@@ -565,29 +606,31 @@ def split_best_vp(i, v, s, linePoints, lines, weightMatrix, lineWeights, lineAng
 
         stdd = s[worstVP] / numClusters
 
-        Ldist = np.zeros((Nworst,Nworst))
+        Ldist = np.zeros((Nworst, Nworst))
         for li in range(Nworst):
             for lj in range(Nworst):
                 if lj != li:
-                    Ldist[li,lj] = 1-lines_points_cosangle(lp[li,:], lp[lj,:], f=2)
+                    Ldist[li, lj] = 1 - \
+                        lines_points_cosangle(lp[li, :], lp[lj, :], f=2)
 
-        model = cluster.AgglomerativeClustering(linkage='average', connectivity=Ldist, n_clusters=numClusters,
-                                                affinity='precomputed')
+        model = cluster.AgglomerativeClustering(
+            linkage='average', connectivity=Ldist, n_clusters=numClusters,
+            affinity='precomputed')
         model.fit_predict(Ldist)
 
         labels = model.labels_
 
         lw = lineWeights[assocLines]
 
-        l[:,0] *= lw
-        l[:,1] *= lw
-        l[:,2] *= lw
+        ln[:, 0] *= lw
+        ln[:, 1] *= lw
+        ln[:, 2] *= lw
 
         new_vps = []
 
         for c in range(numClusters):
 
-            lineSet = l[labels == c]
+            lineSet = ln[labels == c]
 
             if lineSet.shape[0] < 3:
                 continue
@@ -623,14 +666,16 @@ def split_best_vp(i, v, s, linePoints, lines, weightMatrix, lineWeights, lineAng
                     s[worstVP] = stdd
                     first = False
                 else:
-                    v = np.append(v, np.zeros((v.shape[0],1,v.shape[2])), axis=1)
-                    s = np.append(s,stdd)
+                    v = np.append(v, np.zeros(
+                        (v.shape[0], 1, v.shape[2])), axis=1)
+                    s = np.append(s, stdd)
                     v[i, -1, :] = vp.copy()
 
     return {'v': v, 's': s}
 
 
-def merge_vps(i, v, s, l, thresh, lweight, lsim, wbias, pdfpar, lp, llen, distance_measure, max_stdd=0.01,
+def merge_vps(i, v, s, ln, thresh, lweight, lsim, wbias, pdfpar, lp,
+              llen, distance_measure, max_stdd=0.01,
               outlier_stdd=1e-6):
 
     M = v.shape[1]
@@ -644,7 +689,8 @@ def merge_vps(i, v, s, l, thresh, lweight, lsim, wbias, pdfpar, lp, llen, distan
 
         tries += 1
 
-        angles = Parallel(n_jobs=num_cores)(delayed(calc_angle_to_other_vp)(v, i, j) for j in range(M))
+        angles = Parallel(n_jobs=num_cores)(
+            delayed(calc_angle_to_other_vp)(v, i, j) for j in range(M))
         angles = np.stack(angles)
 
         argmin_angle = numpy.unravel_index(angles.argmin(), angles.shape)
@@ -655,14 +701,16 @@ def merge_vps(i, v, s, l, thresh, lweight, lsim, wbias, pdfpar, lp, llen, distan
         if min_angle < thresh:
 
             try:
-                p = prob.calc_probabilities(i, pdfpar, v, l, lp, s, llen, distance_measure)
+                p = prob.calc_probabilities(
+                    i, pdfpar, v, ln, lp, s, llen, distance_measure)
                 w = weight_matrix(p.vl, lweight, lsim, bias=wbias)
 
-                newVP = calc_new_vanishing_point(l, w[j, :] + w[k, :])
+                newVP = calc_new_vanishing_point(ln, w[j, :] + w[k, :])
 
                 p_vl_sum = np.sum(p.vl[k, :] + p.vl[j, :])
-                s_log = np.log(np.sum(0.5 * (p.lvsq[:, j] + p.lvsq[:, k]) * (p.vl[k, :] + p.vl[j, :]))) - \
-                        np.log(p_vl_sum)
+                s_log = np.log(np.sum(0.5 * (p.lvsq[:, j] + p.lvsq[:, k]) *
+                                      (p.vl[k, :] + p.vl[j, :]))) - \
+                    np.log(p_vl_sum)
                 s[k] = np.exp(s_log)
 
                 if newVP is None or s[k] > max_stdd:
@@ -686,8 +734,8 @@ def merge_vps(i, v, s, l, thresh, lweight, lsim, wbias, pdfpar, lp, llen, distan
 
 def calc_angle_to_other_vp(v, i, k):
 
-    thisVP = np.squeeze(v[i,k,:])
-    otherVPs = np.squeeze(v[i,:,:])
+    thisVP = np.squeeze(v[i, k, :])
+    otherVPs = np.squeeze(v[i, :, :])
     cosphi = np.clip(np.dot(otherVPs, thisVP.T), -1, 1)
     angles = np.abs(np.arccos(np.clip(np.abs(cosphi), -1, 1)))
     if np.isscalar(angles):
@@ -707,19 +755,19 @@ def lines_similarity(lp1, lp2, sigma=0.1):
 
 def lines_proximity(lp1, lp2, sigma=0.1):
     sigma = sigma*np.minimum(line_length(lp1), line_length(lp2))
-    d = line_distance_closest(lp1,lp2)
+    d = line_distance_closest(lp1, lp2)
     prox = np.exp(-(d * d) / (2 * sigma * sigma))
     return prox
 
 
-def lines_points_cosangle(lp1,lp2,f=1):
+def lines_points_cosangle(lp1, lp2, f=1):
     v1 = lp1[0:2] - lp1[2:4]
     v2 = lp2[0:2] - lp2[2:4]
 
-    cosdphi = np.abs(np.dot(v1,v2) / (np.linalg.norm(v1)*np.linalg.norm(v2)))
+    cosdphi = np.abs(np.dot(v1, v2) / (np.linalg.norm(v1)*np.linalg.norm(v2)))
 
     dphi = np.abs(np.arccos(np.clip(cosdphi, -1, 1)))
-    cosdphi = np.cos(np.clip(f*dphi,-pi/2,pi/2))
+    cosdphi = np.cos(np.clip(f*dphi, -pi/2, pi/2))
 
     return cosdphi
 
@@ -735,7 +783,7 @@ def line_distance_closest(lp1, lp2):
     d4 = line_segment_point_distance(lp2, l1p1)
     d5 = line_segment_point_distance(lp2, l1p2)
 
-    d = np.min(np.array([d1,d2,d4,d5]))
+    d = np.min(np.array([d1, d2, d4, d5]))
 
     return d
 
@@ -767,7 +815,7 @@ def lines_angles(lp):
     angles = np.zeros(N)
 
     for i in range(N):
-        v = np.array([lp[i,0] - lp[i,2], lp[i,1] - lp[i,3]])
+        v = np.array([lp[i, 0] - lp[i, 2], lp[i, 1] - lp[i, 3]])
         v /= np.linalg.norm(v)
         phi = np.abs(np.arccos(np.clip(v[0], -1, 1)))
         phi = pi-phi if phi > pi/2 else phi

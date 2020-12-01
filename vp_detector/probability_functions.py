@@ -1,8 +1,9 @@
-import numpy as np
 from collections import namedtuple
 
+import numpy as np
+
 PDFParams = namedtuple('PDFParams', 'means weights sigma')
-PDF = namedtuple('PDF', 'v lv vl l lvsq angles')
+PDF = namedtuple('PDF', 'v lv vl ln lvsq angles')
 
 
 def calc_pdf(pdfpar, x, y):
@@ -19,11 +20,16 @@ def calc_pdf(pdfpar, x, y):
     for i in range(x.shape[0]):
         for n in range(N):
             if weights[n] > 0:
-                d1v = np.array([x[i] - means[n, 0], y[i] - means[n, 1]])
-                d2v = np.array([x[i] - means[n, 0] + np.pi, y[i] + means[n, 1]])
-                d3v = np.array([x[i] - means[n, 0] - np.pi, y[i] + means[n, 1]])
-                d4v = np.array([x[i] + means[n, 0], y[i] - means[n, 1] - np.pi])
-                d5v = np.array([x[i] + means[n, 0], y[i] - means[n, 1] - np.pi])
+                d1v = np.array(
+                    [x[i] - means[n, 0], y[i] - means[n, 1]])
+                d2v = np.array(
+                    [x[i] - means[n, 0] + np.pi, y[i] + means[n, 1]])
+                d3v = np.array(
+                    [x[i] - means[n, 0] - np.pi, y[i] + means[n, 1]])
+                d4v = np.array(
+                    [x[i] + means[n, 0], y[i] - means[n, 1] - np.pi])
+                d5v = np.array(
+                    [x[i] + means[n, 0], y[i] - means[n, 1] - np.pi])
 
                 d[0] = np.dot(d1v, d1v)
                 d[1] = np.dot(d2v, d2v)
@@ -54,7 +60,7 @@ def calc_pdf_grid(pdfpar, X, Y):
     response = np.zeros((X.shape,))
 
     for j in range(X.shape[1]):
-        response[:,j] = calc_pdf(pdfpar, X[:,j], Y[:,j])
+        response[:, j] = calc_pdf(pdfpar, X[:, j], Y[:, j])
 
     return response
 
@@ -77,7 +83,7 @@ def pdf_params(cnn_response, confidence=1.282):
     betas = betas.T
 
     alphas = alphas.flatten()
-    betas  = betas.flatten()
+    betas = betas.flatten()
 
     weights = cnn_response.flatten()
 
@@ -89,35 +95,36 @@ def pdf_params(cnn_response, confidence=1.282):
     weights /= np.sum(weights)
     weights /= (2 * np.pi * sigma * sigma)
 
-    means = np.zeros((N,2))
-    means[:,0] = alphas
-    means[:,1] = betas
+    means = np.zeros((N, 2))
+    means[:, 0] = alphas
+    means[:, 1] = betas
 
     return PDFParams(means=means, weights=weights, sigma=sigma)
 
 
-def calc_probabilities(i, pdfpar, v, l, lp, s, llen, distance_measure="angle"):
+def calc_probabilities(i, pdfpar, v, ln, lp, s,
+                       llen, distance_measure="angle"):
 
     M = v.shape[1]
-    N = l.shape[0]
+    N = ln.shape[0]
 
     angles = calc_angles(M, v[i, :, :])
     p_v = calc_pdf(pdfpar, angles[:, 0], angles[:, 1])
 
     if distance_measure == "angle":
-        lvsq = calc_lvsq_angle(v[i, :, :].T, l, lp, llen)
+        lvsq = calc_lvsq_angle(v[i, :, :].T, ln, lp, llen)
     elif distance_measure == "dotprod":
-        lvsq = calc_lvsq_dotprod(v[i, :, :].T, l, lp, llen)
+        lvsq = calc_lvsq_dotprod(v[i, :, :].T, ln, lp, llen)
     elif distance_measure == "area":
-        lvsq = calc_lvsq_area(v[i, :, :].T, l, lp, llen)
+        lvsq = calc_lvsq_area(v[i, :, :].T, ln, lp, llen)
 
-    p_lv = calc_plv(M, v[i,:,:].T, s, lvsq, lp)
+    p_lv = calc_plv(M, v[i, :, :].T, s, lvsq, lp)
 
     p_l = np.dot(p_lv, p_v)
     p_l = np.maximum(p_l, 1e-12)
     p_vl = calc_pvl(M, N, p_lv, p_v, p_l)
 
-    return PDF(v=p_v, lv=p_lv, vl=p_vl, l=p_l, lvsq=lvsq, angles=angles)
+    return PDF(v=p_v, lv=p_lv, vl=p_vl, ln=p_l, lvsq=lvsq, angles=angles)
 
 
 def calc_pvl(M, N, p_lv, p_v, p_l):
@@ -147,52 +154,55 @@ def calc_plv(M, v, s, lvsq, lp):
     return p_lv
 
 
-def calc_lvsq_dotprod(v, l, lp, llen):
-    lv = np.dot(l, v)
+def calc_lvsq_dotprod(v, ln, lp, llen):
+    lv = np.dot(ln, v)
     lvsq = lv * lv
 
     return lvsq
 
 
-def calc_lvsq_angle(v, l, lp, llen):
+def calc_lvsq_angle(v, ln, lp, llen):
 
     M = v.shape[1]
-    N = l.shape[0]
+    N = ln.shape[0]
 
-    lvsq = np.zeros((N,M))
+    lvsq = np.zeros((N, M))
 
     for m in range(M):
-        v_ = v[0:2,m].copy()
-        v_ /= v[2,m]
+        v_ = v[0:2, m].copy()
+        v_ /= v[2, m]
 
         for n in range(N):
-            lm = 0.5 * (lp[n,0:2] + lp[n,2:4])
+            lm = 0.5 * (lp[n, 0:2] + lp[n, 2:4])
 
             vec1 = lm - v_.T
-            vec2 = lp[n,0:2] - lp[n,2:4]
+            vec2 = lp[n, 0:2] - lp[n, 2:4]
 
-            lvsq[n,m] = (1-np.abs(np.dot(vec1,vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2))))**2
+            lvsq[n, m] = (
+                1-np.abs(np.dot(vec1, vec2) /
+                         (np.linalg.norm(vec1)*np.linalg.norm(vec2)))
+            )**2
 
     return lvsq
 
 
-def calc_lvsq_area(v, l, lp, llen):
+def calc_lvsq_area(v, ln, lp, llen):
 
     M = v.shape[1]
-    N = l.shape[0]
+    N = ln.shape[0]
 
-    lvsq = np.zeros((N,M))
+    lvsq = np.zeros((N, M))
 
     for m in range(M):
-        v_ = v[0:2,m].copy()
-        v_ /= v[2,m]
+        v_ = v[0:2, m].copy()
+        v_ /= v[2, m]
 
         for n in range(N):
 
-            lm = 0.5 * (lp[n,0:2] + lp[n,2:4])
+            lm = 0.5 * (lp[n, 0:2] + lp[n, 2:4])
 
             lp1 = np.ones(3)
-            lp1[0:2] = lp[n,0:2].copy()
+            lp1[0:2] = lp[n, 0:2].copy()
 
             lmh = np.ones(3)
             lmh[0:2] = lm[0:2].copy()
@@ -201,15 +211,15 @@ def calc_lvsq_area(v, l, lp, llen):
             vl /= np.linalg.norm(vl[0:2])
 
             b = np.abs(np.dot(vl, lp1))
-            c = np.linalg.norm(lm - lp[n,2:4])
+            c = np.linalg.norm(lm - lp[n, 2:4])
             a = np.sqrt(c**2 - b**2)
 
-            lvsq[n,m] = (a*(b**2)/c)**2
+            lvsq[n, m] = (a*(b**2)/c)**2
 
     return lvsq
 
 
-def calc_lvsq_single(v, l, lp):
+def calc_lvsq_single(v, ln, lp):
 
     v_ = v[0:2].copy()
     v_ /= v[2]
@@ -219,12 +229,13 @@ def calc_lvsq_single(v, l, lp):
     vec1 = lm - v_
     vec2 = lp[0:2] - lp[2:4]
 
-    lvsq = (1-np.abs(np.dot(vec1,vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2))))**2
+    lvsq = (1-np.abs(np.dot(vec1, vec2) /
+                     (np.linalg.norm(vec1)*np.linalg.norm(vec2))))**2
 
     return lvsq
 
 
-def calc_lvsq_area_single(v, l, lp):
+def calc_lvsq_area_single(v, ln, lp):
 
     v_ = v[0:2].copy()
     v_ /= v[2]
@@ -251,18 +262,19 @@ def calc_lvsq_area_single(v, l, lp):
 
 def calc_angles(M, v):
     angle = np.zeros((M, 2))
-    angle[:, 1] = np.arcsin(v[:,1])
-    inner = v[:,0] / np.cos(angle[:, 1])
+    angle[:, 1] = np.arcsin(v[:, 1])
+    inner = v[:, 0] / np.cos(angle[:, 1])
     inner = np.minimum(inner, 1)
     inner = np.maximum(inner, -1)
     angle[:, 0] = np.arcsin(inner)
     return angle
 
+
 def calc_point(M, a):
     v = np.zeros((M, 3))
-    v[:,0] = np.sin(a[:,0])*np.cos(a[:,1])
-    v[:,0] = np.cos(a[:,1])
-    v[:,0] = np.cos(a[:,0])*np.cos(a[:,1])
+    v[:, 0] = np.sin(a[:, 0])*np.cos(a[:, 1])
+    v[:, 0] = np.cos(a[:, 1])
+    v[:, 0] = np.cos(a[:, 0])*np.cos(a[:, 1])
     return v
 
 
@@ -287,7 +299,7 @@ def pdf_grid(cnn_response, N=50):
     aview = aview.flatten()
     bview = bview.flatten()
 
-    x = np.zeros((Nv,2))
+    x = np.zeros((Nv, 2))
     x[:, 0] = aview
     x[:, 1] = bview
 
@@ -303,13 +315,13 @@ def calc_vp_line_triangles(vp, lines):
     angles = np.zeros(lines.shape[0])
     for i in range(lines.shape[0]):
 
-        lp1 = lines[i,0:2]
-        lp2 = lines[i,2:4]
+        lp1 = lines[i, 0:2]
+        lp2 = lines[i, 2:4]
 
-        angle_lp1 = np.dot( v-lp1, lp2-lp1 )
+        angle_lp1 = np.dot(v-lp1, lp2-lp1)
         if angle_lp1 > 0:
-            angle_lp2 = np.dot( v-lp2, lp1-lp2 )
-            angles[i] = np.minimum( angle_lp1, angle_lp2 )
+            angle_lp2 = np.dot(v-lp2, lp1-lp2)
+            angles[i] = np.minimum(angle_lp1, angle_lp2)
         else:
             angles[i] = angle_lp1
 

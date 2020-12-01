@@ -1,3 +1,14 @@
+#  Ignore tests 
+test*/
+
+# ---> Data
+*/scene_understanding
+*.pkl
+
+# ---> Model
+cnn/weights.caffemodel
+cnn/mean.binaryproto
+
 # ---> Python
 # Byte-compiled / optimized / DLL files
 __pycache__/

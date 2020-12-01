@@ -30,7 +30,7 @@ def angle_to_index(angle, shape):
     a = (alpha / np.pi + 0.5 - 0.5/M) * M
     b = (beta / np.pi + 0.5 - 0.5/N) * N
 
-    index = np.array([a,b])
+    index = np.array([a, b])
 
     return index
 

@@ -20,7 +20,8 @@ def calc_auc(error_array, cutoff=0.25):
         if i > 0:
             lastvalue = error_array[i - 1]
             if lastvalue < cutoff < value:
-                midfraction = (lastvalue * plot_points[i - 1, 1] + value * fraction) / (value + lastvalue)
+                midfraction = (lastvalue * plot_points[i - 1, 1] +
+                               value * fraction) / (value + lastvalue)
 
     if plot_points[-1, 0] < cutoff:
         plot_points = np.vstack([plot_points, np.array([cutoff, 1])])

@@ -1,28 +1,41 @@
-import config
-import sys
-sys.path.insert(0,config.caffe_path)
-import evaluation
-import scipy.io as io
+import argparse
 import os
 import pickle
-import scipy.ndimage as ndimage
-import probability_functions as prob
-import calc_horizon as ch
+import sys
 import time
+
 import matplotlib.pyplot as plt
-import argparse
-from auc import *
+import numpy as np
+import scipy.io as io
+import scipy.ndimage as ndimage
+
+import calc_horizon as ch
+import config
+import evaluation
+import probability_functions as prob
+from auc import calc_auc
+
+sys.path.insert(0, config.caffe_path)
+
 
 parser = argparse.ArgumentParser(description='')
-parser.add_argument('--yud', dest='yud', action='store_true', help='Run benchmark on YUD')
-parser.add_argument('--ecd', dest='ecd', action='store_true', help='Run benchmark on ECD')
-parser.add_argument('--hlw', dest='hlw', action='store_true', help='Run benchmark on HLW')
-parser.add_argument('--result_dir', default='/tmp/', type=str, help='Directory to store (intermediate) results')
+parser.add_argument('--yud', dest='yud', action='store_true',
+                    help='Run benchmark on YUD')
+parser.add_argument('--ecd', dest='ecd', action='store_true',
+                    help='Run benchmark on ECD')
+parser.add_argument('--hlw', dest='hlw', action='store_true',
+                    help='Run benchmark on HLW')
+parser.add_argument('--result_dir', default='/tmp/', type=str,
+                    help='Directory to store (intermediate) results')
 parser.add_argument('--gpu', default=0, type=int, help='GPU ID to use')
-parser.add_argument('--update_datalist', dest='update_datalist', action='store_true', help='Update the dataset list')
-parser.add_argument('--update_datafiles', dest='update_datafiles', action='store_true', help='Update the dataset files')
-parser.add_argument('--run_cnn', dest='run_cnn', action='store_true', help='Evaluate CNN on the data')
-parser.add_argument('--run_em', dest='run_em', action='store_true', help='Run EM refinement on the data')
+parser.add_argument('--update_datalist', dest='update_datalist',
+                    action='store_true', help='Update the dataset list')
+parser.add_argument('--update_datafiles', dest='update_datafiles',
+                    action='store_true', help='Update the dataset files')
+parser.add_argument('--run_cnn', dest='run_cnn',
+                    action='store_true', help='Evaluate CNN on the data')
+parser.add_argument('--run_em', dest='run_em',
+                    action='store_true', help='Run EM refinement on the data')
 args = parser.parse_args()
 
 update_list = args.update_datalist
@@ -38,29 +51,39 @@ model_weights = config.cnn_weights_path
 
 if args.yud:
     data_folder = {"name": "york", "source_folder": config.yud_path,
-                   "destination_folder": os.path.join(args.result_dir, "york")}
+                   "destination_folder": os.path.join(
+                       args.result_dir, "york")}
 elif args.ecd:
     data_folder = {"name": "eurasian", "source_folder": config.ecd_path,
-                   "destination_folder": os.path.join(args.result_dir, "eurasian")}
+                   "destination_folder": os.path.join(
+                       args.result_dir, "eurasian")}
 elif args.hlw:
     data_folder = {"name": "horizon", "source_folder": config.hlw_path,
-                   "destination_folder": os.path.join(args.result_dir, "horizon")}
+                   "destination_folder": os.path.join(
+                       args.result_dir, "horizon")}
 else:
     assert False
 
-em_config = {'distance_measure': 'angle', 'use_weights': True, 'do_split': True, 'do_merge': True}
+em_config = {'distance_measure': 'angle',
+             'use_weights': True, 'do_split': True, 'do_merge': True}
 
-dataset = evaluation.get_data_list(data_folder['source_folder'], data_folder['destination_folder'],
-                             'default_net', "", "0",
-                             distance_measure=em_config['distance_measure'],
-                             use_weights=em_config['use_weights'], do_split=em_config['do_split'],
-                             do_merge=em_config['do_merge'], update=update_list, dataset_name=data_folder["name"])
+dataset = evaluation.get_data_list(
+    data_folder['source_folder'], data_folder['destination_folder'],
+    'default_net', "", "0",
+    distance_measure=em_config['distance_measure'],
+    use_weights=em_config['use_weights'], do_split=em_config['do_split'],
+    do_merge=em_config['do_merge'], update=update_list,
+    dataset_name=data_folder["name"])
 
-evaluation.create_data_pickles(dataset, update=update_pickles, cnn_input_size=500,
-                               target_size=800 if (args.ecd or args.hlw) else None)
+evaluation.create_data_pickles(
+    dataset, update=update_pickles, cnn_input_size=500,
+    target_size=800 if (args.ecd or args.hlw) else None)
 
 if update_cnn:
-    evaluation.run_cnn(dataset, mean_file=image_mean, model_def=model_def, model_weights=model_weights, gpu=GPU_ID)
+    evaluation.run_cnn(
+        dataset, mean_file=image_mean,
+        model_def=model_def, model_weights=model_weights,
+        gpu=GPU_ID)
 
 if update_em:
     evaluation.run_em(dataset)
@@ -79,13 +102,14 @@ dataset_name = data_folder["name"]
 print "dataset name: ", dataset['name']
 
 if dataset_name == "york":
-    cameraParams = io.loadmat(os.path.join(config.yud_path, "cameraParameters.mat"))
+    cameraParams = io.loadmat(os.path.join(
+        config.yud_path, "cameraParameters.mat"))
 
-    f = cameraParams['focal'][0,0]
-    ps = cameraParams['pixelSize'][0,0]
-    pp = cameraParams['pp'][0,:]
+    f = cameraParams['focal'][0, 0]
+    ps = cameraParams['pixelSize'][0, 0]
+    pp = cameraParams['pp'][0, :]
 
-    K = np.matrix([[f/ps, 0, 13], [0, f/ps, -11], [0,0,1]])
+    K = np.matrix([[f/ps, 0, 13], [0, f/ps, -11], [0, 0, 1]])
     S = np.matrix([[2.0/640, 0, 0], [0, 2.0/640, 0], [0, 0, 1]])
     K_inv = np.linalg.inv(K)
 metadata = []
@@ -112,8 +136,10 @@ for idx in indices:
 
     count += 1
 
-    if count <= start: continue
-    if count > end: break
+    if count <= start:
+        continue
+    if count > end:
+        break
 
     print "image file: ", image_file
     if not os.path.isfile(image_file):
@@ -140,7 +166,8 @@ for idx in indices:
     trueHorizon = None
 
     if dataset_name == "york":
-        matGTpath = "%s/%s/%sGroundTruthVP_CamParams.mat" % (path1, imageID, imageID)
+        matGTpath = "%s/%s/%sGroundTruthVP_CamParams.mat" % (
+            path1, imageID, imageID)
 
         GTdata = io.loadmat(matGTpath)
 
@@ -149,20 +176,20 @@ for idx in indices:
 
         trueVPs = K * trueVPs
 
-        trueVPs[:,0] /= trueVPs[2,0]
-        trueVPs[:,1] /= trueVPs[2,1]
-        trueVPs[:,2] /= trueVPs[2,2]
+        trueVPs[:, 0] /= trueVPs[2, 0]
+        trueVPs[:, 1] /= trueVPs[2, 1]
+        trueVPs[:, 2] /= trueVPs[2, 2]
 
         trueVPs = S * trueVPs
 
-        tVP1 = np.array(trueVPs[:,0])[:,0]
+        tVP1 = np.array(trueVPs[:, 0])[:, 0]
         tVP1 /= tVP1[2]
-        tVP2 = np.array(trueVPs[:,1])[:,0]
+        tVP2 = np.array(trueVPs[:, 1])[:, 0]
         tVP2 /= tVP2[2]
-        tVP3 = np.array(trueVPs[:,2])[:,0]
+        tVP3 = np.array(trueVPs[:, 2])[:, 0]
         tVP3 /= tVP3[2]
 
-        trueHorizon= np.cross(tVP1, tVP3)
+        trueHorizon = np.cross(tVP1, tVP3)
 
         trueVPs = np.vstack([tVP1, tVP2, tVP3])
 
@@ -175,12 +202,12 @@ for idx in indices:
         trueHorVPs = io.loadmat(vpMatPath)['hor_points']
 
         trueVPs = np.ones((trueHorVPs.shape[0]+1, 3))
-        trueVPs[:,0:2] = np.vstack([trueZenith, trueHorVPs])
+        trueVPs[:, 0:2] = np.vstack([trueZenith, trueHorVPs])
 
-        trueVPs[:,0] -= imageWidth/2
-        trueVPs[:,1] -= imageHeight/2
-        trueVPs[:,1] *= -1
-        trueVPs[:,0:2] /= scale/2
+        trueVPs[:, 0] -= imageWidth/2
+        trueVPs[:, 1] -= imageHeight/2
+        trueVPs[:, 1] *= -1
+        trueVPs[:, 0:2] /= scale/2
 
         trueHorizon = io.loadmat(horizonMatPath)['horizon']
         trueHorizon = np.squeeze(trueHorizon)
@@ -212,8 +239,8 @@ for idx in indices:
                 imageWidth_orig = float(row[2])
                 imageHeight_orig = float(row[1])
                 scale_orig = np.maximum(imageWidth_orig, imageHeight_orig)
-                thP1 = np.array([ float(row[3]), float(row[4]), 1])
-                thP2 = np.array([ float(row[5]), float(row[6]), 1])
+                thP1 = np.array([float(row[3]), float(row[4]), 1])
+                thP2 = np.array([float(row[5]), float(row[6]), 1])
                 thP1[0:2] /= scale_orig/2.0
                 thP2[0:2] /= scale_orig/2.0
                 trueHorizon = np.cross(thP1, thP2)
@@ -223,15 +250,17 @@ for idx in indices:
         datum = pickle.load(fp)
 
     sphere_image = datum['sphere_image'] if 'sphere_image' in datum else None
-    prediction = datum['cnn_prediction'][::-1,:] if 'cnn_prediction' in datum else None
+    prediction = datum['cnn_prediction'][::-1, :] \
+        if 'cnn_prediction' in datum else None
 
     lines_dict = datum['lines'] if 'lines' in datum else None
     em_result = datum['EM_result'] if 'EM_result' in datum else None
 
     assert not (em_result is None), "no EM result!"
 
-    (hP1, hP2, zVP, hVP1, hVP2, best_combo) = ch.calculate_horizon_and_ortho_vp(em_result, maxbest=N_vp,
-                                                                                theta_vmin=theta_vmin)
+    (hP1, hP2, zVP, hVP1, hVP2, best_combo) = \
+        ch.calculate_horizon_and_ortho_vp(em_result, maxbest=N_vp,
+                                          theta_vmin=theta_vmin)
 
     vps = em_result['vp']
     counts = em_result['counts']
@@ -250,7 +279,9 @@ for idx in indices:
         thP1 /= thP1[2]
         thP2 /= thP2[2]
 
-        max_error = np.maximum(np.abs(hP1[1]-thP1[1]), np.abs(hP2[1]-thP2[1]))/2 * scale*1.0/imageHeight
+        max_error = np.maximum(np.abs(hP1[1]-thP1[1]),
+                               np.abs(hP2[1]-thP2[1]))\
+            / 2 * scale*1.0/imageHeight
 
         print "max_error: ", max_error
 
@@ -267,11 +298,11 @@ print "AUC: ", auc
 
 plt.figure()
 ax = plt.subplot()
-ax.plot(plot_points[:,0], plot_points[:,1], '-', lw=2, c='b')
+ax.plot(plot_points[:, 0], plot_points[:, 1], '-', lw=2, c='b')
 ax.set_xlabel('horizon error', fontsize=18)
 ax.set_ylabel('fraction of images', fontsize=18)
 
 plt.setp(ax.get_xticklabels(), fontsize=18)
 plt.setp(ax.get_yticklabels(), fontsize=18)
-ax.axis([0,err_cutoff,0,1])
+ax.axis([0, err_cutoff, 0, 1])
 plt.show()
