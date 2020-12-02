@@ -5,9 +5,9 @@ matplotlib.use('Agg')
 if __name__ == "__main__":
     from vp_detector.example import run_examples
 
-    data_folder = {"name": "test_alina",
-                   "source_folder": "test_alina/images",
-                   "destination_folder": "test_alina/results"}
+    data_folder = {"name": "assets",
+                   "source_folder": "assets/images",
+                   "destination_folder": "assets/results"}
 
     # Run
     run_examples(gpu_id=None, show=False, data_folder=data_folder)
