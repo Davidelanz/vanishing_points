@@ -1,5 +1,7 @@
 # Deep Learning for Vanishing Point Detection Using an Inverse Gnomonic Projection
 
+[![CodeFactor](https://www.codefactor.io/repository/github/davidelanz/vanishing_points/badge)](https://www.codefactor.io/repository/github/davidelanz/vanishing_points)
+
 ---
 
 > ### Copyright disclaimer
