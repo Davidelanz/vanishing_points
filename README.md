@@ -7,26 +7,29 @@
     ```
     apt install imagemagick
     ```
-* what ``spec-file.txt`` and ``requirements.txt`` say
-
-Using other versions of these packages may yield different results.
+* what ``requirements.txt`` says
 
 ### Setup
-* Get the code, install requirements and build LSD:
-```
-git clone --recursive https://github.com/fkluger/Vanishing_Points_GCPR17.git
-cd Vanishing_Points_GCPR17
-conda create --name gcpr17_vp_detection --file spec-file.txt
-source activate gcpr17_vp_detection
-pip install -r requirements.txt
-cd lsdpython
-python setup.py build_ext --inplace
-cd ..
-```
+* Launch a docker container from https://hub.docker.com/r/bvlc/caffe (Python 2.7 + Caffe)
+    ```
+    docker pull bvlc/caffe:cpu
+    ```
+    or any other suitable tag, e.g.:
+    ```
+    docker pull bvlc/caffe:gpu
+    ```
+* Initialize the repository
+    ```
+    git clone https://github.com/Davidelanz/vanishing_points.git
+    cd vanishing_points
+    pip install -r requirements.txt
+    ```
 * Download the [CNN weights and image mean files](https://drive.google.com/open?id=1VBBszbCWuVEQ0a7DKVqZNngRsk1Zorei) and 
 put them into the ``cnn`` folder.
 * Adjust ``config.py`` so that it contains the path to your Caffe installation and the paths where you store 
 the [benchmark datasets](#datasets).
+
+> Here below is still to update:
 
 ### Run
 #### Examples
