@@ -4,6 +4,9 @@
 
 > ### Copyright disclaimer
 > 
+> The copyright in this software is being made available under the [BSD LICENSE](LICENSE) Copyright (c) 2017-present 
+> Leibniz University Hannover (LUH) Institut fuer Informationsverarbeitung (TNT)
+>
 > The code provided here was adapted from:
 > ```
 > @inproceedings{kluger2017deep,
@@ -15,6 +18,7 @@
 > ```
 > The paper can be found on [arXiv](https://arxiv.org/abs/1707.02427).
 > Refer to [fkluger/vanishing_points_2017](https://github.com/fkluger/vanishing_points_2017) for additional information and resources.
+>
 
 ---
 
