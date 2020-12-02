@@ -67,13 +67,13 @@ python main.py
 
 ### Examples
 
-![example](assets/plots/degas-dancer_plot.png)
+![example](https://raw.githubusercontent.com/Davidelanz/vanishing_points/master/assets/plots/degas-dancer_plot.png)
 
-![example](assets/plots/degas-ballet-class_plot.png)
+![example](https://raw.githubusercontent.com/Davidelanz/vanishing_points/master/assets/plots/degas-ballet-class_plot.png)
 
-![example](assets/plots/ihme_zentrum_plot.png)
+![example](https://raw.githubusercontent.com/Davidelanz/vanishing_points/master/assets/plots/ihme_zentrum_plot.png)
 
-![example](assets/plots/nord_lb_plot.png)
+![example](https://raw.githubusercontent.com/Davidelanz/vanishing_points/master/assets/plots/nord_lb_plot.png)
 
 
 ### Run
