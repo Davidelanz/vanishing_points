@@ -29,42 +29,28 @@ put them into the ``cnn`` folder.
 * Adjust ``config.py`` so that it contains the path to your Caffe installation and the paths where you store 
 the [benchmark datasets](#datasets).
 
-> Here below is still to update:
 
 ### Run
 #### Examples
-You can run the vanishing point detector on four example images (see below) and visualise the results. 
-Computation may take a few moments. Adjust the GPU ID if necessary:
+You can run the vanishing point detector on the example images and visualise the results. 
+Computation may take a few moments. Adjust with the GPU ID if necessary:
 ``` 
-python example.py --gpu 0
-python example.py --show
-```
-#### Benchmarks
-Run the following commands to evaluate the vanishing point detector on the three benchmark datasets and plot the AUC curves:
-```
-python benchmark.py --yud --gpu 0 --update_datalist --update_datafiles --run_cnn --run_em
-python benchmark.py --yud --gpu 0 
-python benchmark.py --ecd --gpu 0 --update_datalist --update_datafiles --run_cnn --run_em
-python benchmark.py --ecd --gpu 0 
-python benchmark.py --hlw --gpu 0 --update_datalist --update_datafiles --run_cnn --run_em
-python benchmark.py --hlw --gpu 0 
+python main.py
 ```
 
 ### Examples
 
-![example](assets/figure3.jpg)
+![example](assets/polts/degas-dancer.jpg)
 
-![example](assets/figure4.jpg)
+![example](assets/polts/degas-ballet-class.jpg)
 
-![example](assets/figure1.jpg)
+![example](assets/polts/ihme_zentrum.jpg)
 
-![example](assets/figure2.jpg)
-
-
+![example](assets/polts/nord_lb.jpg)
 
 ### References
 
-If you use the code provided here, please cite:
+The code provided here was adapted from:
 ```
 @inproceedings{kluger2017deep,
   title={Deep learning for vanishing point detection using an inverse gnomonic projection},
@@ -79,10 +65,3 @@ The benchmark datasets used in the paper can be found here: <a name='datasets'><
 * [York Urban Dataset](http://www.elderlab.yorku.ca/resources/york-urban-line-segment-database-information/)
 * [Eurasian Cities Dataset](http://graphics.cs.msu.ru/en/research/projects/msr/geometry)
 * [Horizon Lines in the Wild](http://www.cs.uky.edu/~jacobs/datasets/hlw/)
-
-The example images show landmarks in Hannover, Germany:
-* [Welfenschloss](https://www.flickr.com/photos/shepard4711/40441168973/in/photolist-8KSNgP-24BDyA2-dHQyus-RsMpqr-qfCQuS-91DBT-5aprBZ-7uavc5-7u6BEk-7u6Agv-7u6zBR-7ua1Am-7u6mU4-7u6cdk-7u657F)
-* [Lichthof at Leibniz University](https://commons.wikimedia.org/wiki/File:Atrium_Lichthof_main_building_Welfenschloss_Leibniz_Universitatet_Hannover_Am_Welfengarten_Nordstadt_Hannover_Germany.jpg)
-* [Ihme-Zentrum](https://commons.wikimedia.org/wiki/Category:Ihme-Zentrum?uselang=de#/media/File:Ihme-Zentrum_Spinnereistrasse_Hanover_Germany.jpg)
-* [Nord LB](https://www.flickr.com/photos/dierkschaefer/5999546112/in/photolist-6EywNo-pdpBA8-a97hon-eQ6474-a9acHm-a9a9AG-a9af3d-R5SNyF-a97tck-eQhHCJ-fruEuZ-eQi2tE-eQhk8d-qnVgrW-24fRi2L-eQhyxE-bymrtQ-kU7Apk-a9a74Y-2bxix-PRf3sv-SXwgoU-dyUjRC-jbB22-rgmqm-24awG1H-4zjzyq-TMEpHD-Rer4CD-rt82Av-rgiWa)
-
