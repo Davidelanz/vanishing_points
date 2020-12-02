@@ -1,6 +1,7 @@
 import cPickle as pickle
 import glob
 import os
+import shutil
 
 import numpy as np
 from pylsd.lsd import lsd
@@ -145,7 +146,7 @@ def create_data_pickles(dataset, update=False, cnn_input_size=250,
     if not os.path.exists(resized_dir):
         os.makedirs(resized_dir)
     else:
-        os.rmdir(resized_dir)
+        shutil.rmtree(resized_dir)
         os.makedirs(resized_dir)
 
     for idx in range(len(image_files)):

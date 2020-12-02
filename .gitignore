@@ -1,5 +1,3 @@
-#  Ignore tests 
-test*/
 
 # ---> Data
 */scene_understanding
@@ -8,6 +6,10 @@ test*/
 # ---> Model
 cnn/weights.caffemodel
 cnn/mean.binaryproto
+
+# ---> Results
+*/resized
+*/results
 
 # ---> Python
 # Byte-compiled / optimized / DLL files

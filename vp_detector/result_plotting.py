@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
@@ -123,9 +124,17 @@ def show_em_result(datum, image_file, maxbest=4, true_vps=None,
 
     plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)
 
-    parent_dir = os.path.dirname(os.path.dirname(image_file))
-    plot_dir = os.path.join(parent_dir, "plots")
-    fig1.savefig(os.path.join(plot_dir, image_file))
+    plots_dir = os.path.join(
+        os.path.dirname(os.path.dirname(image_file)), "plots",)
+    if not os.path.exists(plots_dir):
+        os.makedirs(plots_dir)
+    else:
+        shutil.rmtree(plots_dir)
+        os.makedirs(plots_dir)
+
+    basename = os.path.basename(image_file).split(".")[0]
+
+    fig1.savefig(os.path.join(plots_dir, basename + "_plot.png"))
 
 
 def plot_result(ax1, ax2, vps, angles, vp_counts, best=None,
