@@ -40,13 +40,13 @@ python main.py
 
 ### Examples
 
-![example](assets/polts/degas-dancer.jpg)
+![example](assets/plots/degas-dancer.jpg)
 
-![example](assets/polts/degas-ballet-class.jpg)
+![example](assets/plots/degas-ballet-class.jpg)
 
-![example](assets/polts/ihme_zentrum.jpg)
+![example](assets/plots/ihme_zentrum.jpg)
 
-![example](assets/polts/nord_lb.jpg)
+![example](assets/plots/nord_lb.jpg)
 
 ### References
 
