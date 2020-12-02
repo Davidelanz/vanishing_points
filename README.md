@@ -26,8 +26,17 @@
 * Python ``requirements.txt`` packages
 
 ### Setup
+* Launch the docker container from https://hub.docker.com/repository/docker/davidelanz/vanishing_points
+    ```
+    docker pull davidelanz/vanishing_points
+    ```
+* Test the software:
+    ```
+    cd /home/vanishing_points
+    pytest test.py
+    ```
 
-### Manual Setup (from `bvlc/caffe` docker)
+### Manual Setup
 * Launch a docker container from https://hub.docker.com/r/bvlc/caffe (Python 2.7 + Caffe)
     ```
     docker pull bvlc/caffe:cpu
@@ -42,8 +51,8 @@
     cd vanishing_points
     pip install -r requirements.txt
     ```
-* Download the [CNN weights and image mean files](https://drive.google.com/open?id=1VBBszbCWuVEQ0a7DKVqZNngRsk1Zorei) and 
-put them into the ``cnn`` folder.
+* Download the CNN weights and image mean files from the [releases](https://github.com/Davidelanz/vanishing_points/releases)
+and put them into the ``cnn`` folder.
 * Adjust ``config.py`` so that it contains the path to your Caffe installation and the paths where you store 
 the [benchmark datasets](#datasets).
 
