@@ -126,11 +126,6 @@ def show_em_result(datum, image_file, maxbest=4, true_vps=None,
 
     plots_dir = os.path.join(
         os.path.dirname(os.path.dirname(image_file)), "plots",)
-    if not os.path.exists(plots_dir):
-        os.makedirs(plots_dir)
-    else:
-        shutil.rmtree(plots_dir)
-        os.makedirs(plots_dir)
 
     basename = os.path.basename(image_file).split(".")[0]
 

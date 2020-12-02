@@ -1,15 +1,33 @@
-## Deep Learning for Vanishing Point Detection Using an Inverse Gnomonic Projection
+# Deep Learning for Vanishing Point Detection Using an Inverse Gnomonic Projection
+
+---
+
+> ### Copyright disclaimer
+> 
+> The code provided here was adapted from:
+> ```
+> @inproceedings{kluger2017deep,
+>   title={Deep learning for vanishing point detection using an inverse gnomonic projection},
+>   author={Kluger, Florian and Ackermann, Hanno and Yang, Michael Ying and Rosenhahn, Bodo},
+>   booktitle={German Conference on Pattern Recognition (GCPR)},
+>   year={2017}
+> }
+> ```
+> The paper can be found on [arXiv](https://arxiv.org/abs/1707.02427).
+> Refer to [fkluger/vanishing_points_2017](https://github.com/fkluger/vanishing_points_2017) for additional information and resources.
+
+---
+
+## Getting Started
 
 ### Requirements
-* Anaconda w/ Python 2.7
-* [Caffe 1.0-RC5](https://github.com/BVLC/caffe/tree/rc5)
-* ImageMagick 6.8.8-1
-    ```
-    apt install imagemagick
-    ```
-* what ``requirements.txt`` says
+* [Caffe 1.0-RC5](https://github.com/BVLC/caffe/tree/rc5) on Python 2.7
+* ImageMagick
+* Python ``requirements.txt`` packages
 
 ### Setup
+
+### Manual Setup (from `bvlc/caffe` docker)
 * Launch a docker container from https://hub.docker.com/r/bvlc/caffe (Python 2.7 + Caffe)
     ```
     docker pull bvlc/caffe:cpu
@@ -31,37 +49,27 @@ the [benchmark datasets](#datasets).
 
 
 ### Run
-#### Examples
+
 You can run the vanishing point detector on the example images and visualise the results. 
-Computation may take a few moments. Adjust with the GPU ID if necessary:
+Computation may take a few moments. Adjust the ``gpu_id`` in the ``main.py`` file if necessary. Then run:
 ``` 
 python main.py
 ```
 
 ### Examples
 
-![example](assets/plots/degas-dancer.jpg)
+![example](assets/plots/degas-dancer_plot.png)
 
-![example](assets/plots/degas-ballet-class.jpg)
+![example](assets/plots/degas-ballet-class_plot.png)
 
-![example](assets/plots/ihme_zentrum.jpg)
+![example](assets/plots/ihme_zentrum_plot.png)
 
-![example](assets/plots/nord_lb.jpg)
+![example](assets/plots/nord_lb_plot.png)
 
-### References
 
-The code provided here was adapted from:
+### Run
+
+A single-image test is available:
+``` 
+pytest test.py
 ```
-@inproceedings{kluger2017deep,
-  title={Deep learning for vanishing point detection using an inverse gnomonic projection},
-  author={Kluger, Florian and Ackermann, Hanno and Yang, Michael Ying and Rosenhahn, Bodo},
-  booktitle={German Conference on Pattern Recognition (GCPR)},
-  year={2017}
-}
-```
-The paper can be found on [arXiv](https://arxiv.org/abs/1707.02427).
-
-The benchmark datasets used in the paper can be found here: <a name='datasets'></a>
-* [York Urban Dataset](http://www.elderlab.yorku.ca/resources/york-urban-line-segment-database-information/)
-* [Eurasian Cities Dataset](http://graphics.cs.msu.ru/en/research/projects/msr/geometry)
-* [Horizon Lines in the Wild](http://www.cs.uky.edu/~jacobs/datasets/hlw/)

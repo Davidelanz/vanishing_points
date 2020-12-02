@@ -10,6 +10,6 @@ if __name__ == "__main__":
                    "destination_folder": "assets/results"}
 
     # Run
-    run_examples(gpu_id=None, show=False, data_folder=data_folder)
+    #run_examples(gpu_id=None, show=False, data_folder=data_folder)
     # Then show
     run_examples(gpu_id=None, show=True, data_folder=data_folder)

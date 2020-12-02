@@ -2,6 +2,7 @@
 import os
 import pickle
 import sys
+import shutil
 
 import numpy as np
 import scipy.ndimage as ndimage
@@ -46,6 +47,14 @@ def run_examples(gpu_id=None, show=False, data_folder=None):
         evaluation.run_em(dataset)
 
     else:
+        plots_dir = os.path.join(
+            os.path.dirname(os.path.dirname(dataset['image_files'][0])), "plots",)
+        if not os.path.exists(plots_dir):
+            os.makedirs(plots_dir)
+        else:
+            shutil.rmtree(plots_dir)
+            os.makedirs(plots_dir)
+
         for idx in range(len(dataset['image_files'])):
 
             image_file = dataset['image_files'][idx]
