@@ -43,6 +43,10 @@ ENV PYTHONPATH $PYCAFFE_ROOT:$PYTHONPATH
 ENV PATH $CAFFE_ROOT/build/tools:$PYCAFFE_ROOT:$PATH
 RUN echo "$CAFFE_ROOT/build/lib" >> /etc/ld.so.conf.d/caffe.conf && ldconfig
 
+RUN apt-get update && \
+    apt-get install imagemagick -y && \
+    apt-get install python-tk -y
+
 RUN cd /home && \
     git clone https://github.com/Davidelanz/vanishing_points.git && \
     cd vanishing_points && \
@@ -51,3 +55,5 @@ RUN cd /home && \
     wget "https://github.com/Davidelanz/vanishing_points/releases/download/0.1-alpha/weights.caffemodel" && \
     wget "https://github.com/Davidelanz/vanishing_points/releases/download/0.1-alpha/mean.binaryproto"
     
+RUN cd /home/vanishing_points &&\
+    pytest test.py
