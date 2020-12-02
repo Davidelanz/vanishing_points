@@ -52,8 +52,8 @@ RUN cd /home && \
     cd vanishing_points && \
     pip install --ignore-installed -r requirements.txt && \
     cd cnn && \
-    wget "https://github.com/Davidelanz/vanishing_points/releases/download/0.1-alpha/weights.caffemodel" && \
-    wget "https://github.com/Davidelanz/vanishing_points/releases/download/0.1-alpha/mean.binaryproto"
+    wget "https://github.com/Davidelanz/vanishing_points/releases/download/1.0/weights.caffemodel" && \
+    wget "https://github.com/Davidelanz/vanishing_points/releases/download/1.0/mean.binaryproto"
     
 RUN cd /home/vanishing_points &&\
     pytest test.py
